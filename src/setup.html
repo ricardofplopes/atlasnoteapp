@@ -87,17 +87,22 @@
       url = url.replace(/\/+$/, "");
 
       setLoading(true);
-      setStatus("Testing connection...", "info");
+      setStatus("⏳ Connecting to server...", "info");
 
-      const result = await atlasNote.testConnection(url);
+      try {
+        const result = await atlasNote.testConnection(url);
 
-      if (result.ok) {
-        setStatus("Connected! Loading AtlasNote...", "success");
-        setTimeout(() => atlasNote.connectToServer(url), 500);
-      } else {
+        if (result.ok) {
+          setStatus("✓ Connected! Loading AtlasNote...", "success");
+          setTimeout(() => atlasNote.connectToServer(url), 600);
+        } else {
+          setLoading(false);
+          const reason = result.error || `Server returned status ${result.status}`;
+          setStatus(`✗ ${reason}`, "error");
+        }
+      } catch (err) {
         setLoading(false);
-        const reason = result.error || `Server returned ${result.status}`;
-        setStatus(`Could not connect: ${reason}`, "error");
+        setStatus("✗ Unexpected error. Check the URL and try again.", "error");
       }
     });
 

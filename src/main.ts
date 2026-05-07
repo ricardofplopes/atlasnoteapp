@@ -24,6 +24,7 @@ function saveConfig(config: AppConfig): void {
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
+let isConnecting = false;
 
 function createSetupWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -193,13 +194,15 @@ ipcMain.handle("test-connection", async (_event, url: string) => {
 
 ipcMain.handle("connect-to-server", (_event, url: string) => {
   saveConfig({ serverUrl: url });
+  isConnecting = true;
   if (mainWindow) {
-    mainWindow.close();
+    mainWindow.destroy();
     mainWindow = null;
   }
   mainWindow = createMainWindow(url);
   createTray();
   createAppMenu();
+  isConnecting = false;
 });
 
 // App lifecycle
@@ -216,7 +219,7 @@ app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
-  if (!tray) {
+  if (!tray && !isConnecting) {
     app.quit();
   }
 });
