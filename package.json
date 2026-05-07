@@ -47,9 +47,10 @@
         }
       ],
       "icon": "assets/icon.ico",
-      "publisherName": "Ricardo Lopes",
       "sign": false,
-      "signAndEditExecutable": false
+      "signAndEditExecutable": false,
+      "requestedExecutionLevel": "asInvoker",
+      "legalTrademarks": "AtlasNote by Ricardo Lopes"
     },
     "nsis": {
       "oneClick": false,

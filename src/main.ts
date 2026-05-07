@@ -111,6 +111,9 @@ function createMainWindow(url: string): BrowserWindow {
 
 function injectTitleBar(win: BrowserWindow): void {
   const css = `
+    html, body {
+      overflow-x: hidden !important;
+    }
     #atlasnote-titlebar {
       position: fixed;
       top: 0;
@@ -124,10 +127,11 @@ function injectTitleBar(win: BrowserWindow): void {
       border-bottom: 1px solid #1e1a3a;
       -webkit-app-region: drag;
       user-select: none;
+      box-sizing: border-box;
     }
     #atlasnote-titlebar .tb-menu-btn {
       -webkit-app-region: no-drag;
-      width: 32px;
+      width: 36px;
       height: 32px;
       border: none;
       background: transparent;
@@ -146,11 +150,13 @@ function injectTitleBar(win: BrowserWindow): void {
     }
     #atlasnote-titlebar .tb-drag {
       flex: 1;
+      height: 100%;
     }
     #atlasnote-titlebar .tb-controls {
       display: flex;
       -webkit-app-region: no-drag;
       flex-shrink: 0;
+      height: 100%;
     }
     #atlasnote-titlebar .tb-ctrl-btn {
       width: 46px;
@@ -164,6 +170,7 @@ function injectTitleBar(win: BrowserWindow): void {
       align-items: center;
       justify-content: center;
       transition: background 0.12s, color 0.12s;
+      outline: none;
     }
     #atlasnote-titlebar .tb-ctrl-btn:hover {
       background: rgba(255, 255, 255, 0.08);
@@ -175,6 +182,7 @@ function injectTitleBar(win: BrowserWindow): void {
     }
     body {
       padding-top: 32px !important;
+      overflow-x: hidden !important;
     }
   `;
 
@@ -213,7 +221,7 @@ function injectTitleBar(win: BrowserWindow): void {
       var minBtn = document.createElement('button');
       minBtn.className = 'tb-ctrl-btn';
       minBtn.title = 'Minimize';
-      minBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6h8" stroke="currentColor" stroke-width="1.2"/></svg>';
+      minBtn.innerHTML = '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M1 5h8" stroke="currentColor" stroke-width="1"/></svg>';
       minBtn.addEventListener('click', function() {
         if (window.atlasNote) window.atlasNote.minimizeWindow();
       });
@@ -223,7 +231,7 @@ function injectTitleBar(win: BrowserWindow): void {
       var maxBtn = document.createElement('button');
       maxBtn.className = 'tb-ctrl-btn';
       maxBtn.title = 'Maximize';
-      maxBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12"><rect x="2" y="2" width="8" height="8" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>';
+      maxBtn.innerHTML = '<svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" stroke="currentColor" stroke-width="1" fill="none"/></svg>';
       maxBtn.addEventListener('click', function() {
         if (window.atlasNote) window.atlasNote.maximizeWindow();
       });
@@ -233,7 +241,7 @@ function injectTitleBar(win: BrowserWindow): void {
       var closeBtn = document.createElement('button');
       closeBtn.className = 'tb-ctrl-btn tb-close';
       closeBtn.title = 'Close';
-      closeBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.2"/></svg>';
+      closeBtn.innerHTML = '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M1 1l8 8M9 1l-8 8" stroke="currentColor" stroke-width="1"/></svg>';
       closeBtn.addEventListener('click', function() {
         if (window.atlasNote) window.atlasNote.closeWindow();
       });
