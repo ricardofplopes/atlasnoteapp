@@ -5,4 +5,5 @@ contextBridge.exposeInMainWorld("atlasNote", {
   saveServerUrl: (url: string) => ipcRenderer.invoke("save-server-url", url),
   testConnection: (url: string) => ipcRenderer.invoke("test-connection", url),
   connectToServer: (url: string) => ipcRenderer.invoke("connect-to-server", url),
+  closeWindow: () => ipcRenderer.invoke("close-window"),
 });

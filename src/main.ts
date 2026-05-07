@@ -72,11 +72,13 @@ function createMainWindow(url: string): BrowserWindow {
     return { action: "deny" };
   });
 
-  win.on("close", (event) => {
+  win.on("closed", () => {
+    mainWindow = null;
     if (tray) {
-      event.preventDefault();
-      win.hide();
+      tray.destroy();
+      tray = null;
     }
+    app.quit();
   });
 
   return win;
@@ -163,7 +165,7 @@ function createAppMenu(): void {
 
 function openSettings(): void {
   if (mainWindow) {
-    mainWindow.close();
+    mainWindow.destroy();
     mainWindow = null;
   }
   mainWindow = createSetupWindow();
@@ -172,6 +174,14 @@ function openSettings(): void {
 // IPC Handlers
 ipcMain.handle("get-server-url", () => {
   return loadConfig().serverUrl;
+});
+
+ipcMain.handle("close-window", () => {
+  if (mainWindow) {
+    mainWindow.destroy();
+    mainWindow = null;
+  }
+  app.quit();
 });
 
 ipcMain.handle("save-server-url", (_event, url: string) => {
@@ -219,7 +229,7 @@ app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
-  if (!tray && !isConnecting) {
+  if (!isConnecting) {
     app.quit();
   }
 });
