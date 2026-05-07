@@ -1,6 +1,6 @@
 {
   "name": "atlasnoteapp",
-  "version": "1.0.2",
+  "version": "0.1.0",
   "description": "AtlasNote Desktop - A container application for AtlasNote",
   "main": "dist/main.js",
   "scripts": {
@@ -28,6 +28,7 @@
       "dist/**/*",
       "src/setup.html",
       "src/setup.css",
+      "src/setup.js",
       "assets/**/*"
     ],
     "win": {
@@ -46,6 +47,7 @@
         }
       ],
       "icon": "assets/icon.ico",
+      "publisherName": "Ricardo Lopes",
       "sign": false,
       "signAndEditExecutable": false
     },
