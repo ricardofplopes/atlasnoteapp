@@ -1,6 +1,6 @@
 {
   "name": "atlasnoteapp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "AtlasNote Desktop - A container application for AtlasNote",
   "main": "dist/main.js",
   "scripts": {
