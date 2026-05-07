@@ -1,0 +1,60 @@
+{
+  "name": "atlasnoteapp",
+  "version": "1.0.0",
+  "description": "AtlasNote Desktop - A container application for AtlasNote",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && electron .",
+    "dev": "tsc && electron .",
+    "dist": "npm run build && electron-builder",
+    "dist:portable": "npm run build && electron-builder --win portable"
+  },
+  "author": "Ricardo Lopes",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "typescript": "^5.6.0"
+  },
+  "build": {
+    "appId": "com.atlasnote.app",
+    "productName": "AtlasNote",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "src/setup.html",
+      "src/setup.css",
+      "assets/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "sign": false,
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico"
+    }
+  }
+}

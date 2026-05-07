@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AtlasNote — Setup</title>
+  <link rel="stylesheet" href="setup.css" />
+</head>
+<body>
+  <div class="container">
+    <!-- Draggable title bar -->
+    <div class="titlebar">
+      <button class="titlebar-close" id="close-btn">✕</button>
+    </div>
+
+    <!-- Logo -->
+    <div class="logo-section">
+      <img src="../assets/icon.png" alt="AtlasNote" class="logo" />
+      <h1 class="app-name">Atlas<span class="accent">Note</span></h1>
+      <p class="subtitle">Connect to your AtlasNote server</p>
+    </div>
+
+    <!-- Form -->
+    <div class="form-section">
+      <div class="input-group">
+        <label for="server-url">Server URL</label>
+        <input
+          type="url"
+          id="server-url"
+          placeholder="http://localhost:3000"
+          spellcheck="false"
+          autocomplete="off"
+        />
+      </div>
+
+      <div id="status-message" class="status-message hidden"></div>
+
+      <button id="connect-btn" class="connect-btn">
+        <span id="btn-text">Connect</span>
+        <span id="btn-loader" class="loader hidden"></span>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const { atlasNote } = window;
+
+    const urlInput = document.getElementById("server-url");
+    const connectBtn = document.getElementById("connect-btn");
+    const btnText = document.getElementById("btn-text");
+    const btnLoader = document.getElementById("btn-loader");
+    const statusMessage = document.getElementById("status-message");
+    const closeBtn = document.getElementById("close-btn");
+
+    // Load saved URL
+    atlasNote.getServerUrl().then((url) => {
+      if (url) urlInput.value = url;
+    });
+
+    closeBtn.addEventListener("click", () => window.close());
+
+    function setStatus(message, type) {
+      statusMessage.textContent = message;
+      statusMessage.className = `status-message ${type}`;
+    }
+
+    function setLoading(loading) {
+      connectBtn.disabled = loading;
+      btnText.classList.toggle("hidden", loading);
+      btnLoader.classList.toggle("hidden", !loading);
+    }
+
+    connectBtn.addEventListener("click", async () => {
+      let url = urlInput.value.trim();
+      if (!url) {
+        setStatus("Please enter a server URL", "error");
+        return;
+      }
+
+      // Ensure URL has protocol
+      if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        url = "http://" + url;
+        urlInput.value = url;
+      }
+
+      // Remove trailing slash
+      url = url.replace(/\/+$/, "");
+
+      setLoading(true);
+      setStatus("Testing connection...", "info");
+
+      const result = await atlasNote.testConnection(url);
+
+      if (result.ok) {
+        setStatus("Connected! Loading AtlasNote...", "success");
+        setTimeout(() => atlasNote.connectToServer(url), 500);
+      } else {
+        setLoading(false);
+        const reason = result.error || `Server returned ${result.status}`;
+        setStatus(`Could not connect: ${reason}`, "error");
+      }
+    });
+
+    // Enter key to submit
+    urlInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") connectBtn.click();
+    });
+  </script>
+</body>
+</html>
