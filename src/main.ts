@@ -6,6 +6,12 @@ interface AppConfig {
   serverUrl: string;
 }
 
+// Paths - use app.getAppPath() for packaged app compatibility
+const appRoot = app.getAppPath();
+const preloadPath = path.join(appRoot, "dist", "preload.js");
+const setupHtmlPath = path.join(appRoot, "src", "setup.html");
+const iconPath = path.join(appRoot, "assets", "icon.png");
+
 // Simple JSON store
 const configPath = path.join(app.getPath("userData"), "config.json");
 
@@ -29,20 +35,27 @@ let isConnecting = false;
 function createSetupWindow(): BrowserWindow {
   const win = new BrowserWindow({
     width: 480,
-    height: 400,
+    height: 420,
     resizable: false,
     frame: false,
     transparent: false,
     backgroundColor: "#0d0b24",
-    icon: path.join(__dirname, "..", "assets", "icon.png"),
+    icon: iconPath,
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: preloadPath,
       nodeIntegration: false,
       contextIsolation: true,
+      sandbox: false,
     },
   });
 
-  win.loadFile(path.join(__dirname, "..", "src", "setup.html"));
+  win.loadFile(setupHtmlPath);
+
+  // Log preload errors
+  win.webContents.on("preload-error", (_event, preloadPath, error) => {
+    console.error("Preload error:", preloadPath, error);
+  });
+
   return win;
 }
 
@@ -53,12 +66,13 @@ function createMainWindow(url: string): BrowserWindow {
     minWidth: 900,
     minHeight: 600,
     backgroundColor: "#0d0b24",
-    icon: path.join(__dirname, "..", "assets", "icon.png"),
+    icon: iconPath,
     title: "AtlasNote",
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: preloadPath,
       nodeIntegration: false,
       contextIsolation: true,
+      sandbox: false,
     },
   });
 
@@ -85,7 +99,6 @@ function createMainWindow(url: string): BrowserWindow {
 }
 
 function createTray(): void {
-  const iconPath = path.join(__dirname, "..", "assets", "icon.png");
   const icon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
   tray = new Tray(icon);
 

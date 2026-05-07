@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' file:" />
   <title>AtlasNote — Setup</title>
   <link rel="stylesheet" href="setup.css" />
 </head>
@@ -43,8 +44,26 @@
   </div>
 
   <script>
-    const { atlasNote } = window;
+    // Global error handler - show errors visually
+    window.onerror = function(msg, src, line, col, err) {
+      showError("JS Error: " + msg + " (line " + line + ")");
+      return false;
+    };
 
+    function showError(msg) {
+      const el = document.getElementById("status-message");
+      if (el) {
+        el.textContent = "⚠️ " + msg;
+        el.className = "status-message error";
+      }
+    }
+
+    // Check if preload bridge is available
+    if (!window.atlasNote) {
+      showError("Bridge not loaded. App may not be packaged correctly.");
+    }
+
+    const atlasNote = window.atlasNote;
     const urlInput = document.getElementById("server-url");
     const connectBtn = document.getElementById("connect-btn");
     const btnText = document.getElementById("btn-text");
@@ -53,15 +72,24 @@
     const closeBtn = document.getElementById("close-btn");
 
     // Load saved URL
-    atlasNote.getServerUrl().then((url) => {
-      if (url) urlInput.value = url;
-    });
+    if (atlasNote) {
+      atlasNote.getServerUrl().then((url) => {
+        if (url) urlInput.value = url;
+      }).catch((e) => showError("Failed to load config: " + e.message));
+    }
 
-    closeBtn.addEventListener("click", () => atlasNote.closeWindow());
+    // Close button - use IPC if available, fallback to window.close()
+    closeBtn.addEventListener("click", () => {
+      if (atlasNote && atlasNote.closeWindow) {
+        atlasNote.closeWindow();
+      } else {
+        window.close();
+      }
+    });
 
     function setStatus(message, type) {
       statusMessage.textContent = message;
-      statusMessage.className = `status-message ${type}`;
+      statusMessage.className = "status-message " + type;
     }
 
     function setLoading(loading) {
@@ -71,6 +99,11 @@
     }
 
     connectBtn.addEventListener("click", async () => {
+      if (!atlasNote) {
+        setStatus("⚠️ App bridge not available. Try restarting the app.", "error");
+        return;
+      }
+
       let url = urlInput.value.trim();
       if (!url) {
         setStatus("Please enter a server URL", "error");
@@ -87,22 +120,27 @@
       url = url.replace(/\/+$/, "");
 
       setLoading(true);
-      setStatus("⏳ Connecting to server...", "info");
+      setStatus("⏳ Connecting to " + url + " ...", "info");
 
       try {
         const result = await atlasNote.testConnection(url);
 
         if (result.ok) {
           setStatus("✓ Connected! Loading AtlasNote...", "success");
-          setTimeout(() => atlasNote.connectToServer(url), 600);
+          setTimeout(() => {
+            atlasNote.connectToServer(url).catch((e) => {
+              setLoading(false);
+              setStatus("✗ Failed to open: " + e.message, "error");
+            });
+          }, 600);
         } else {
           setLoading(false);
-          const reason = result.error || `Server returned status ${result.status}`;
-          setStatus(`✗ ${reason}`, "error");
+          const reason = result.error || ("Server returned status " + result.status);
+          setStatus("✗ " + reason, "error");
         }
       } catch (err) {
         setLoading(false);
-        setStatus("✗ Unexpected error. Check the URL and try again.", "error");
+        setStatus("✗ " + (err.message || "Unexpected error"), "error");
       }
     });
 
