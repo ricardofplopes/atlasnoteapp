@@ -68,12 +68,7 @@ function createMainWindow(url: string): BrowserWindow {
     backgroundColor: "#0d0b24",
     icon: iconPath,
     title: "AtlasNote",
-    titleBarStyle: "hidden",
-    titleBarOverlay: {
-      color: "#0d0b24",
-      symbolColor: "#a8a4b8",
-      height: 36,
-    },
+    frame: false,
     webPreferences: {
       preload: preloadPath,
       nodeIntegration: false,
@@ -87,9 +82,9 @@ function createMainWindow(url: string): BrowserWindow {
 
   win.loadURL(url);
 
-  // Inject the floating icon menu button after page loads
+  // Inject the custom title bar after page loads
   win.webContents.on("did-finish-load", () => {
-    injectIconMenu(win);
+    injectTitleBar(win);
   });
 
   // Open external links in browser
@@ -114,59 +109,138 @@ function createMainWindow(url: string): BrowserWindow {
   return win;
 }
 
-function injectIconMenu(win: BrowserWindow): void {
-  const iconDataUri = nativeImage.createFromPath(iconPath)
-    .resize({ width: 20, height: 20 })
-    .toDataURL();
-
+function injectTitleBar(win: BrowserWindow): void {
   const css = `
-    #atlasnote-menu-btn {
+    #atlasnote-titlebar {
       position: fixed;
-      top: 6px;
-      left: 8px;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 32px;
       z-index: 99999;
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      background: #0d0b24;
+      border-bottom: 1px solid #1e1a3a;
+      -webkit-app-region: drag;
+      user-select: none;
+    }
+    #atlasnote-titlebar .tb-menu-btn {
+      -webkit-app-region: no-drag;
+      width: 32px;
+      height: 32px;
       border: none;
       background: transparent;
+      color: #a8a4b8;
+      font-size: 16px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.15s;
-      -webkit-app-region: no-drag;
-      padding: 0;
+      transition: background 0.12s, color 0.12s;
+      flex-shrink: 0;
     }
-    #atlasnote-menu-btn:hover {
+    #atlasnote-titlebar .tb-menu-btn:hover {
       background: rgba(122, 92, 255, 0.15);
+      color: #e8e6f0;
     }
-    #atlasnote-menu-btn:active {
-      background: rgba(122, 92, 255, 0.25);
+    #atlasnote-titlebar .tb-drag {
+      flex: 1;
     }
-    #atlasnote-menu-btn img {
-      width: 18px;
-      height: 18px;
-      border-radius: 3px;
+    #atlasnote-titlebar .tb-controls {
+      display: flex;
+      -webkit-app-region: no-drag;
+      flex-shrink: 0;
+    }
+    #atlasnote-titlebar .tb-ctrl-btn {
+      width: 46px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      color: #a8a4b8;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.12s, color 0.12s;
+    }
+    #atlasnote-titlebar .tb-ctrl-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #e8e6f0;
+    }
+    #atlasnote-titlebar .tb-ctrl-btn.tb-close:hover {
+      background: #e81123;
+      color: #ffffff;
+    }
+    body {
+      padding-top: 32px !important;
     }
   `;
 
   const js = `
     (function() {
-      if (document.getElementById('atlasnote-menu-btn')) return;
+      if (document.getElementById('atlasnote-titlebar')) return;
       var style = document.createElement('style');
       style.textContent = ${JSON.stringify(css)};
       document.head.appendChild(style);
-      var btn = document.createElement('button');
-      btn.id = 'atlasnote-menu-btn';
-      btn.title = 'AtlasNote Menu';
-      btn.innerHTML = '<img src="${iconDataUri}" alt="Menu" />';
-      btn.addEventListener('click', function() {
+
+      var bar = document.createElement('div');
+      bar.id = 'atlasnote-titlebar';
+
+      // Menu button (hamburger)
+      var menuBtn = document.createElement('button');
+      menuBtn.className = 'tb-menu-btn';
+      menuBtn.title = 'Menu';
+      menuBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+      menuBtn.addEventListener('click', function() {
         if (window.atlasNote && window.atlasNote.showAppMenu) {
           window.atlasNote.showAppMenu();
         }
       });
-      document.body.appendChild(btn);
+      bar.appendChild(menuBtn);
+
+      // Drag spacer
+      var drag = document.createElement('div');
+      drag.className = 'tb-drag';
+      bar.appendChild(drag);
+
+      // Window controls
+      var controls = document.createElement('div');
+      controls.className = 'tb-controls';
+
+      // Minimize
+      var minBtn = document.createElement('button');
+      minBtn.className = 'tb-ctrl-btn';
+      minBtn.title = 'Minimize';
+      minBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6h8" stroke="currentColor" stroke-width="1.2"/></svg>';
+      minBtn.addEventListener('click', function() {
+        if (window.atlasNote) window.atlasNote.minimizeWindow();
+      });
+      controls.appendChild(minBtn);
+
+      // Maximize
+      var maxBtn = document.createElement('button');
+      maxBtn.className = 'tb-ctrl-btn';
+      maxBtn.title = 'Maximize';
+      maxBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12"><rect x="2" y="2" width="8" height="8" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>';
+      maxBtn.addEventListener('click', function() {
+        if (window.atlasNote) window.atlasNote.maximizeWindow();
+      });
+      controls.appendChild(maxBtn);
+
+      // Close
+      var closeBtn = document.createElement('button');
+      closeBtn.className = 'tb-ctrl-btn tb-close';
+      closeBtn.title = 'Close';
+      closeBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.2"/></svg>';
+      closeBtn.addEventListener('click', function() {
+        if (window.atlasNote) window.atlasNote.closeWindow();
+      });
+      controls.appendChild(closeBtn);
+
+      bar.appendChild(controls);
+      document.body.appendChild(bar);
     })();
   `;
 
@@ -244,7 +318,7 @@ function showPopupMenu(): void {
   ];
 
   const menu = Menu.buildFromTemplate(template);
-  menu.popup({ window: mainWindow, x: 8, y: 36 });
+  menu.popup({ window: mainWindow, x: 0, y: 32 });
 }
 
 function createTray(): void {
@@ -340,6 +414,18 @@ ipcMain.handle("connect-to-server", (_event, url: string) => {
 
 ipcMain.handle("show-app-menu", () => {
   showPopupMenu();
+});
+
+ipcMain.handle("minimize-window", () => {
+  mainWindow?.minimize();
+});
+
+ipcMain.handle("maximize-window", () => {
+  if (mainWindow?.isMaximized()) {
+    mainWindow.unmaximize();
+  } else {
+    mainWindow?.maximize();
+  }
 });
 
 // App lifecycle

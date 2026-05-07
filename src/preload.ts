@@ -7,4 +7,6 @@ contextBridge.exposeInMainWorld("atlasNote", {
   connectToServer: (url: string) => ipcRenderer.invoke("connect-to-server", url),
   closeWindow: () => ipcRenderer.invoke("close-window"),
   showAppMenu: () => ipcRenderer.invoke("show-app-menu"),
+  minimizeWindow: () => ipcRenderer.invoke("minimize-window"),
+  maximizeWindow: () => ipcRenderer.invoke("maximize-window"),
 });
