@@ -114,6 +114,29 @@ function injectTitleBar(win: BrowserWindow): void {
     html, body {
       overflow-x: hidden !important;
     }
+    /* Adjust root layout height to account for title bar */
+    body > div:first-child {
+      height: calc(100vh - 32px) !important;
+      max-height: calc(100vh - 32px) !important;
+    }
+    /* Dark themed scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(168, 164, 184, 0.15);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(168, 164, 184, 0.3);
+    }
+    ::-webkit-scrollbar-corner {
+      background: transparent;
+    }
     #atlasnote-titlebar {
       position: fixed;
       top: 0;
@@ -259,6 +282,8 @@ function showPopupMenu(): void {
   if (!mainWindow) return;
 
   const config = loadConfig();
+  const wc = mainWindow.webContents;
+  const win = mainWindow;
   const template: Electron.MenuItemConstructorOptions[] = [
     {
       label: "Change Server",
@@ -267,33 +292,29 @@ function showPopupMenu(): void {
     {
       label: "Reload",
       accelerator: "CmdOrCtrl+R",
-      click: () => mainWindow?.webContents.reload(),
+      click: () => wc.reload(),
     },
     { type: "separator" },
     {
       label: "Zoom In",
       accelerator: "CmdOrCtrl+=",
       click: () => {
-        if (mainWindow) {
-          const zoom = mainWindow.webContents.getZoomLevel();
-          mainWindow.webContents.setZoomLevel(zoom + 0.5);
-        }
+        const zoom = wc.getZoomLevel();
+        wc.setZoomLevel(zoom + 0.5);
       },
     },
     {
       label: "Zoom Out",
       accelerator: "CmdOrCtrl+-",
       click: () => {
-        if (mainWindow) {
-          const zoom = mainWindow.webContents.getZoomLevel();
-          mainWindow.webContents.setZoomLevel(zoom - 0.5);
-        }
+        const zoom = wc.getZoomLevel();
+        wc.setZoomLevel(zoom - 0.5);
       },
     },
     {
       label: "Reset Zoom",
       accelerator: "CmdOrCtrl+0",
-      click: () => mainWindow?.webContents.setZoomLevel(0),
+      click: () => wc.setZoomLevel(0),
     },
     { type: "separator" },
     {
@@ -326,7 +347,7 @@ function showPopupMenu(): void {
   ];
 
   const menu = Menu.buildFromTemplate(template);
-  menu.popup({ window: mainWindow, x: 0, y: 32 });
+  menu.popup({ window: win, x: 0, y: 32 });
 }
 
 function createTray(): void {
