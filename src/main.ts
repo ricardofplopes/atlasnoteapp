@@ -109,112 +109,133 @@ function createMainWindow(url: string): BrowserWindow {
   return win;
 }
 
+// CSS injected via Chromium-native insertCSS for reliability
+const TITLEBAR_CSS = `
+  /* Force all viewports to account for 32px title bar */
+  html, body {
+    overflow-x: hidden !important;
+  }
+  body {
+    padding-top: 32px !important;
+    overflow-x: hidden !important;
+    height: 100vh !important;
+    box-sizing: border-box !important;
+  }
+  /* Next.js root container - use 100% of body content area */
+  #__next {
+    height: calc(100vh - 32px) !important;
+    max-height: calc(100vh - 32px) !important;
+    overflow: hidden !important;
+  }
+  /* Fallback: first div child of body (in case #__next is not used) */
+  body > div:first-child:not(#atlasnote-titlebar) {
+    height: calc(100vh - 32px) !important;
+    max-height: calc(100vh - 32px) !important;
+    overflow: hidden !important;
+  }
+  /* Override any h-screen classes inside the app */
+  #__next > div {
+    height: 100% !important;
+    max-height: 100% !important;
+  }
+  /* Dark themed scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(168, 164, 184, 0.15) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent !important;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(168, 164, 184, 0.15) !important;
+    border-radius: 3px !important;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(168, 164, 184, 0.3) !important;
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent !important;
+  }
+  /* Title bar styles */
+  #atlasnote-titlebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 32px;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    background: #0d0b24;
+    border-bottom: 1px solid #1e1a3a;
+    -webkit-app-region: drag;
+    user-select: none;
+    box-sizing: border-box;
+  }
+  #atlasnote-titlebar .tb-menu-btn {
+    -webkit-app-region: no-drag;
+    width: 36px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: #a8a4b8;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.12s, color 0.12s;
+    flex-shrink: 0;
+  }
+  #atlasnote-titlebar .tb-menu-btn:hover {
+    background: rgba(122, 92, 255, 0.15);
+    color: #e8e6f0;
+  }
+  #atlasnote-titlebar .tb-drag {
+    flex: 1;
+    height: 100%;
+  }
+  #atlasnote-titlebar .tb-controls {
+    display: flex;
+    -webkit-app-region: no-drag;
+    flex-shrink: 0;
+    height: 100%;
+  }
+  #atlasnote-titlebar .tb-ctrl-btn {
+    width: 46px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: #a8a4b8;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.12s, color 0.12s;
+    outline: none;
+  }
+  #atlasnote-titlebar .tb-ctrl-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e8e6f0;
+  }
+  #atlasnote-titlebar .tb-ctrl-btn.tb-close:hover {
+    background: #e81123;
+    color: #ffffff;
+  }
+`;
+
 function injectTitleBar(win: BrowserWindow): void {
-  const css = `
-    html, body {
-      overflow-x: hidden !important;
-    }
-    /* Adjust root layout height to account for title bar */
-    body > div:first-child {
-      height: calc(100vh - 32px) !important;
-      max-height: calc(100vh - 32px) !important;
-    }
-    /* Dark themed scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(168, 164, 184, 0.15);
-      border-radius: 3px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(168, 164, 184, 0.3);
-    }
-    ::-webkit-scrollbar-corner {
-      background: transparent;
-    }
-    #atlasnote-titlebar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 32px;
-      z-index: 99999;
-      display: flex;
-      align-items: center;
-      background: #0d0b24;
-      border-bottom: 1px solid #1e1a3a;
-      -webkit-app-region: drag;
-      user-select: none;
-      box-sizing: border-box;
-    }
-    #atlasnote-titlebar .tb-menu-btn {
-      -webkit-app-region: no-drag;
-      width: 36px;
-      height: 32px;
-      border: none;
-      background: transparent;
-      color: #a8a4b8;
-      font-size: 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.12s, color 0.12s;
-      flex-shrink: 0;
-    }
-    #atlasnote-titlebar .tb-menu-btn:hover {
-      background: rgba(122, 92, 255, 0.15);
-      color: #e8e6f0;
-    }
-    #atlasnote-titlebar .tb-drag {
-      flex: 1;
-      height: 100%;
-    }
-    #atlasnote-titlebar .tb-controls {
-      display: flex;
-      -webkit-app-region: no-drag;
-      flex-shrink: 0;
-      height: 100%;
-    }
-    #atlasnote-titlebar .tb-ctrl-btn {
-      width: 46px;
-      height: 32px;
-      border: none;
-      background: transparent;
-      color: #a8a4b8;
-      font-size: 12px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.12s, color 0.12s;
-      outline: none;
-    }
-    #atlasnote-titlebar .tb-ctrl-btn:hover {
-      background: rgba(255, 255, 255, 0.08);
-      color: #e8e6f0;
-    }
-    #atlasnote-titlebar .tb-ctrl-btn.tb-close:hover {
-      background: #e81123;
-      color: #ffffff;
-    }
-    body {
-      padding-top: 32px !important;
-      overflow-x: hidden !important;
-    }
-  `;
+  // Use Chromium-native CSS injection (more reliable than JS-based style injection)
+  win.webContents.insertCSS(TITLEBAR_CSS).catch(() => {});
 
   const js = `
     (function() {
       if (document.getElementById('atlasnote-titlebar')) return;
-      var style = document.createElement('style');
-      style.textContent = ${JSON.stringify(css)};
-      document.head.appendChild(style);
 
       var bar = document.createElement('div');
       bar.id = 'atlasnote-titlebar';
